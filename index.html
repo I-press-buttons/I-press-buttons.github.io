@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chris's Project List</title>
+    <meta
+      name="description"
+      content="Things Chris has built: a US traffic-law practice quiz, a zero-dependency party card game, and whatever comes next."
+    />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#05060f" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Chris's Project List" />
+    <meta
+      property="og:description"
+      content="Things Chris has built: a US traffic-law practice quiz, a zero-dependency party card game, and whatever comes next."
+    />
+    <meta property="og:url" content="https://i-press-buttons.github.io/" />
+  </head>
+  <body>
+    <!-- Everything from here to the end of .sky is decoration. It is inert to
+         the mouse and hidden from screen readers, so the document a reader
+         actually gets is: a heading, a line of intro, and two projects. -->
+    <div class="sky" aria-hidden="true">
+      <div class="stardust"></div>
+      <div class="nebula"></div>
+      <div class="stars">
+        <span style="--x: 6%;  --y: 12%; --s: 2px; --d: 0.0s"></span>
+        <span style="--x: 18%; --y: 34%; --s: 3px; --d: 1.4s"></span>
+        <span style="--x: 27%; --y: 8%;  --s: 2px; --d: 2.7s"></span>
+        <span style="--x: 41%; --y: 22%; --s: 2px; --d: 0.8s"></span>
+        <span style="--x: 55%; --y: 6%;  --s: 3px; --d: 3.3s"></span>
+        <span style="--x: 63%; --y: 41%; --s: 2px; --d: 1.9s"></span>
+        <span style="--x: 74%; --y: 15%; --s: 3px; --d: 2.2s"></span>
+        <span style="--x: 82%; --y: 29%; --s: 2px; --d: 0.5s"></span>
+        <span style="--x: 91%; --y: 47%; --s: 2px; --d: 3.9s"></span>
+        <span style="--x: 12%; --y: 58%; --s: 2px; --d: 2.4s"></span>
+        <span style="--x: 35%; --y: 71%; --s: 3px; --d: 1.1s"></span>
+        <span style="--x: 68%; --y: 66%; --s: 2px; --d: 3.1s"></span>
+        <span style="--x: 88%; --y: 79%; --s: 2px; --d: 0.3s"></span>
+        <span style="--x: 48%; --y: 88%; --s: 3px; --d: 2.9s"></span>
+      </div>
+
+      <!-- Asteroids drift right-to-left on very long loops. They live inside
+           .sky, which clips overflow, so they can never widen the page. -->
+      <div class="asteroids">
+        <svg class="asteroid a1" viewBox="0 0 100 80" width="52" height="42">
+          <polygon
+            points="14,30 34,6 68,4 94,26 88,58 62,76 28,70 6,50"
+            fill="#2a2f45"
+            stroke="#3d4463"
+            stroke-width="2"
+          />
+          <circle cx="40" cy="34" r="7" fill="#20243a" />
+          <circle cx="66" cy="50" r="5" fill="#20243a" />
+        </svg>
+        <svg class="asteroid a2" viewBox="0 0 100 80" width="34" height="27">
+          <polygon
+            points="10,42 26,12 60,6 90,30 80,62 50,74 20,66"
+            fill="#262b40"
+            stroke="#383e59"
+            stroke-width="2"
+          />
+          <circle cx="52" cy="40" r="8" fill="#1c2033" />
+        </svg>
+        <svg class="asteroid a3" viewBox="0 0 100 80" width="70" height="56">
+          <polygon
+            points="8,36 30,8 70,10 92,38 78,66 44,76 16,62"
+            fill="#232840"
+            stroke="#353b56"
+            stroke-width="2"
+          />
+          <circle cx="36" cy="42" r="9" fill="#1a1e30" />
+          <circle cx="68" cy="28" r="5" fill="#1a1e30" />
+        </svg>
+      </div>
+    </div>
+
+    <header class="masthead">
+      <svg
+        class="rocket"
+        viewBox="0 0 80 200"
+        width="80"
+        height="200"
+        aria-hidden="true"
+      >
+        <!-- Exhaust: a tapering plume drawn under the body, so the rocket
+             reads as climbing rather than parked. -->
+        <path
+          class="plume"
+          d="M40 128 C54 152 52 176 40 198 C28 176 26 152 40 128 Z"
+          fill="url(#flame)"
+        />
+        <path
+          class="plume core"
+          d="M40 130 C47 148 46 162 40 178 C34 162 33 148 40 130 Z"
+          fill="#fff4d2"
+          opacity=".85"
+        />
+        <defs>
+          <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fff0c2" stop-opacity="1" />
+            <stop offset="35%" stop-color="#ffb03c" stop-opacity=".9" />
+            <stop offset="72%" stop-color="#ff6b3d" stop-opacity=".5" />
+            <stop offset="100%" stop-color="#ff4d3d" stop-opacity="0" />
+          </linearGradient>
+          <linearGradient id="hull" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#c3cbe6" />
+            <stop offset="42%" stop-color="#f4f7ff" />
+            <stop offset="100%" stop-color="#8f98b8" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M40 8 C58 34 66 74 66 104 L66 132 L14 132 L14 104 C14 74 22 34 40 8 Z"
+          fill="url(#hull)"
+        />
+        <path d="M14 104 L2 140 L14 132 Z" fill="#e05a4a" />
+        <path d="M66 104 L78 140 L66 132 Z" fill="#e05a4a" />
+        <circle cx="40" cy="62" r="13" fill="#0d1730" />
+        <circle cx="40" cy="62" r="9" fill="#5fd3c4" opacity=".85" />
+        <circle cx="36" cy="58" r="3" fill="#dffbf6" opacity=".7" />
+        <rect x="14" y="122" width="52" height="10" rx="3" fill="#b9c1dd" />
+      </svg>
+
+      <p class="eyebrow">I press buttons</p>
+      <h1>Chris's Project List</h1>
+      <p class="tagline">
+        Small things built for the fun of building them. Here is what is
+        currently in orbit.
+      </p>
+    </header>
+
+    <main>
+      <h2 class="section-heading">Projects</h2>
+
+      <div class="fleet">
+        <article class="planet-card">
+          <div class="planet-slot" aria-hidden="true">
+            <svg class="planet ringed" viewBox="0 0 220 220" width="220" height="220">
+              <defs>
+                <radialGradient id="amber" cx="35%" cy="30%" r="75%">
+                  <stop offset="0%" stop-color="#ffd79a" />
+                  <stop offset="45%" stop-color="#f0a53f" />
+                  <stop offset="100%" stop-color="#8a4a12" />
+                </radialGradient>
+                <clipPath id="amberClip">
+                  <circle cx="110" cy="110" r="64" />
+                </clipPath>
+              </defs>
+              <!-- Ring drawn behind the globe, then again in front, so the
+                   globe sits inside the ring instead of on top of it. -->
+              <ellipse
+                class="ring"
+                cx="110" cy="110" rx="102" ry="30"
+                fill="none" stroke="#e8b877" stroke-opacity=".55" stroke-width="7"
+                transform="rotate(-18 110 110)"
+              />
+              <circle cx="110" cy="110" r="64" fill="url(#amber)" />
+              <g clip-path="url(#amberClip)" opacity=".38">
+                <ellipse cx="110" cy="78" rx="80" ry="9" fill="#ffe3b5" />
+                <ellipse cx="110" cy="104" rx="80" ry="6" fill="#7d3f0d" />
+                <ellipse cx="110" cy="128" rx="80" ry="11" fill="#ffcf92" />
+                <ellipse cx="110" cy="150" rx="80" ry="7" fill="#6f350a" />
+              </g>
+              <g clip-path="url(#amberClip)" opacity=".3">
+                <circle cx="86" cy="120" r="11" fill="#6b3308" />
+                <circle cx="132" cy="92" r="7" fill="#6b3308" />
+              </g>
+              <path
+                class="ring-front"
+                d="M8 110 A102 30 0 0 0 212 110"
+                fill="none" stroke="#f2c88c" stroke-opacity=".75" stroke-width="7"
+                transform="rotate(-18 110 110)"
+              />
+            </svg>
+          </div>
+
+          <div class="planet-text">
+            <h3>Right of Way</h3>
+            <p class="blurb">
+              A practice quiz on US traffic law, with animated scenes that play
+              out each intersection instead of describing it.
+            </p>
+            <p class="stack">React · TypeScript · Supabase</p>
+            <p class="links">
+              <a class="link primary" href="https://right-of-way.techyo.workers.dev">
+                Visit the site
+              </a>
+              <span class="link muted">Source is private</span>
+            </p>
+          </div>
+        </article>
+
+        <article class="planet-card">
+          <div class="planet-slot" aria-hidden="true">
+            <svg class="planet" viewBox="0 0 220 220" width="220" height="220">
+              <defs>
+                <radialGradient id="teal" cx="34%" cy="28%" r="78%">
+                  <stop offset="0%" stop-color="#9ff0e2" />
+                  <stop offset="42%" stop-color="#3fb7a8" />
+                  <stop offset="100%" stop-color="#2a2a63" />
+                </radialGradient>
+                <clipPath id="tealClip">
+                  <circle cx="110" cy="110" r="70" />
+                </clipPath>
+              </defs>
+              <circle cx="110" cy="110" r="70" fill="url(#teal)" />
+              <g clip-path="url(#tealClip)" opacity=".4">
+                <ellipse cx="110" cy="72" rx="86" ry="8" fill="#c7fbf1" />
+                <ellipse cx="110" cy="112" rx="86" ry="12" fill="#7b6bd6" />
+                <ellipse cx="110" cy="146" rx="86" ry="9" fill="#241f52" />
+              </g>
+              <g clip-path="url(#tealClip)" opacity=".33">
+                <circle cx="84" cy="96" r="13" fill="#1d5a55" />
+                <circle cx="139" cy="132" r="9" fill="#1d5a55" />
+                <circle cx="120" cy="80" r="6" fill="#1d5a55" />
+              </g>
+              <!-- A small moon, so the two planets are not the same silhouette. -->
+              <circle class="moon" cx="190" cy="48" r="13" fill="#cfd6f0" />
+              <circle cx="186" cy="44" r="4" fill="#a9b2d4" opacity=".8" />
+            </svg>
+          </div>
+
+          <div class="planet-text">
+            <h3>Drawn Together</h3>
+            <p class="blurb">
+              A zero-dependency party card game: draw question cards of
+              increasing rarity and talk. 108 built-in questions, plus custom
+              packs you can share with an unlock code.
+            </p>
+            <p class="stack">Vanilla JS · Python standard library · Supabase</p>
+            <p class="links">
+              <a
+                class="link primary"
+                href="https://github.com/I-press-buttons/drawn-together"
+              >
+                View the source
+              </a>
+            </p>
+          </div>
+        </article>
+      </div>
+    </main>
+
+    <footer>
+      <p>More on the launchpad.</p>
+    </footer>
+  </body>
+</html>
