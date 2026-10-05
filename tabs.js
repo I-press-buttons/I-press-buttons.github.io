@@ -1,7 +1,7 @@
 /* Category tabs above the project list. Each card carries a data-category, and
    the selected tab hides every card outside it. The last tab picked is
    remembered. When the set of visible cards changes, .fleet gets a
-   "fleetchange" event so the 3D view can rebuild its turntable. */
+   "fleetchange" event so the 3D view can redraw its star map. */
 
 (function () {
   "use strict";
