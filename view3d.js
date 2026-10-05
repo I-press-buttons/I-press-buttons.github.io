@@ -2,7 +2,8 @@
    level-select style, and the arrows spin it. The flat list is the default and
    the switch at the top of the page turns this on or off; the choice is
    remembered. The cards in .fleet are the only copy of each project, so a new
-   card shows up in both views with nothing else to change. */
+   card shows up in both views with nothing else to change. Only the cards the
+   category tabs leave visible go on the turntable. */
 
 (function () {
   "use strict";
@@ -29,7 +30,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.querySelector("main");
     var fleet = document.querySelector(".fleet");
-    var cards = Array.prototype.slice.call(fleet.querySelectorAll(".planet-card"));
+    var allCards = Array.prototype.slice.call(fleet.querySelectorAll(".planet-card"));
     var switchWrap = document.querySelector(".view-switch");
     var toggle = switchWrap.querySelector(".switch");
     var hud = document.querySelector(".hud");
@@ -37,19 +38,20 @@
     var controls = document.querySelector(".hud-controls");
     var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-    var n = cards.length;
-    var angle = 360 / n;
-    // `step` only ever counts up or down, never wraps, so the turntable always
-    // turns the short way round instead of spinning back past every card.
-    var step = 0;
+    // Each card stands at --d steps round the table from the one in front,
+    // ANGLE apart. Cards two or more steps away face backwards and are not
+    // drawn, so any number of cards works, and a tab with two looks the same
+    // as one with six.
+    var ANGLE = 60;
+    var cards = [];
+    var n = 0;
+    var active = 0;
 
-    cards.forEach(function (card, i) {
-      card.style.setProperty("--i", i);
-    });
-    fleet.style.setProperty("--angle", angle + "deg");
+    fleet.style.setProperty("--angle", ANGLE + "deg");
 
-    function activeIndex() {
-      return ((step % n) + n) % n;
+    function offset(i) {
+      var d = (((i - active) % n) + n) % n;
+      return d > n / 2 ? d - n : d;
     }
 
     function is3d() {
@@ -60,20 +62,32 @@
     // to be tall enough for the tallest card, so both are measured, not set.
     function layout() {
       if (!is3d()) return;
+      if (!n) return;
       var width = cards[0].offsetWidth;
       var tallest = 0;
       cards.forEach(function (card) {
         tallest = Math.max(tallest, card.offsetHeight);
       });
-      var radius = n > 2 ? (width / 2 + 48) / Math.tan(Math.PI / n) : width;
+      var radius = (width / 2 + 48) / Math.tan(((ANGLE / 2) * Math.PI) / 180);
       fleet.style.setProperty("--radius", Math.round(radius) + "px");
       fleet.style.height = tallest + 60 + "px";
     }
 
     function render() {
-      var active = activeIndex();
-      fleet.style.setProperty("--step", step);
+      if (!n) return;
       cards.forEach(function (card, i) {
+        var before = Number(card.style.getPropertyValue("--d")) || 0;
+        var after = offset(i);
+        // A card wrapping round from one end to the other would otherwise
+        // sweep across the front on its way; it jumps there unseen instead.
+        if (Math.abs(after - before) > 1) {
+          card.classList.add("no-turn");
+          card.style.setProperty("--d", after);
+          void card.offsetWidth;
+          card.classList.remove("no-turn");
+        } else {
+          card.style.setProperty("--d", after);
+        }
         card.classList.toggle("is-active", i === active);
       });
       hudCount.textContent =
@@ -82,13 +96,38 @@
     }
 
     function select(index) {
-      // Take the shortest way from the current card to `index`.
-      var diff = index - activeIndex();
-      if (diff > n / 2) diff -= n;
-      if (diff < -n / 2) diff += n;
-      step += diff;
+      active = ((index % n) + n) % n;
       render();
     }
+
+    function turn(by) {
+      select(active + by);
+    }
+
+    // Rebuild from whichever cards are visible now. A hidden card keeps no
+    // place on the table, and the first visible card comes to the front.
+    function refresh() {
+      cards = allCards.filter(function (card) {
+        return !card.hidden;
+      });
+      n = cards.length;
+      active = 0;
+      allCards.forEach(function (card) {
+        card.classList.add("no-turn");
+        card.classList.remove("is-active");
+        card.style.removeProperty("--d");
+      });
+      if (is3d()) {
+        layout();
+        render();
+      }
+      void fleet.offsetWidth;
+      allCards.forEach(function (card) {
+        card.classList.remove("no-turn");
+      });
+    }
+
+    fleet.addEventListener("fleetchange", refresh);
 
     function setView(view) {
       root.dataset.view = view;
@@ -96,8 +135,7 @@
       hud.hidden = view !== "3d";
       controls.hidden = view !== "3d";
       if (view === "3d") {
-        layout();
-        render();
+        refresh();
       } else {
         fleet.style.height = "";
         resetTilt();
@@ -113,8 +151,7 @@
     controls.addEventListener("click", function (event) {
       var button = event.target.closest("[data-step]");
       if (!button) return;
-      step += Number(button.dataset.step);
-      render();
+      turn(Number(button.dataset.step));
     });
 
     // A click on a card that is not in front brings it to the front instead of
@@ -145,19 +182,19 @@
     // focus is on a control that uses them itself.
     document.addEventListener("keydown", function (event) {
       if (!is3d() || event.altKey || event.ctrlKey || event.metaKey) return;
-      if (event.target.closest("input, textarea, select, [contenteditable]")) return;
+      if (event.target.closest("input, textarea, select, [contenteditable], [role=tab]")) return;
+      if (!n) return;
       var key = event.key;
       if (key === "ArrowLeft" || key === "ArrowRight") {
         event.preventDefault();
-        step += key === "ArrowRight" ? 1 : -1;
-        render();
+        turn(key === "ArrowRight" ? 1 : -1);
         // Keep focus on the card that is now in front, if focus was on a card.
         if (fleet.contains(document.activeElement)) {
-          var link = cards[activeIndex()].querySelector("a");
+          var link = cards[active].querySelector("a");
           if (link) link.focus({ preventScroll: true });
         }
       } else if (key === "Enter" && !event.target.closest("a, button, [role]")) {
-        var primary = cards[activeIndex()].querySelector("a.link");
+        var primary = cards[active].querySelector("a.link");
         if (primary) primary.click();
       }
     });

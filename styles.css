@@ -222,6 +222,48 @@ h1 {
 
 /* ------------------------------------------------------------ the projects */
 
+/* Category tabs: a pill-shaped segmented control above the heading. tabs.js
+   unhides it and hides the cards outside the selected tab. */
+.tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin: 0 0 1.75rem;
+  padding: 0.3rem;
+  border: 1px solid var(--card-line);
+  border-radius: 999px;
+  background: var(--card);
+}
+
+.tabs[hidden],
+.planet-card[hidden] {
+  display: none;
+}
+
+.tab {
+  padding: 0.5rem 1.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab[aria-selected="true"] {
+  background: rgba(95, 211, 196, 0.18);
+  color: var(--teal);
+  box-shadow: inset 0 0 0 1px rgba(95, 211, 196, 0.5);
+}
+
 .section-heading {
   margin: 0 0 1.5rem;
   font-size: 0.8rem;
@@ -439,8 +481,9 @@ footer p {
 
 /* Everything below applies only once view3d.js has set data-view="3d" on
    <html>. The same .planet-card articles are rearranged onto a turntable:
-   each stands at its own angle round a ring (--i × --angle), and the ring
-   turns by --step cards. view3d.js measures --radius to fit the cards. */
+   each stands --d steps round a ring from the card in front (--d × --angle),
+   and view3d.js updates --d as the table turns. It also measures --radius to
+   fit the cards. */
 
 .hud,
 .hud-controls,
@@ -493,8 +536,7 @@ footer p {
   padding: 0;
   transform-style: preserve-3d;
   transform: translateZ(calc(var(--radius, 400px) * -1))
-    rotateX(var(--tilt-x, 0deg))
-    rotateY(calc(var(--step, 0) * var(--angle) * -1 + var(--tilt-y, 0deg)));
+    rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
   transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -508,7 +550,7 @@ footer p {
   justify-items: center;
   gap: 0.75rem;
   text-align: center;
-  transform: translate(-50%, -50%) rotateY(calc(var(--i) * var(--angle)))
+  transform: translate(-50%, -50%) rotateY(calc(var(--d, 0) * var(--angle)))
     translateZ(var(--radius, 400px));
   /* Cards turned away are not drawn, so their text never shows mirrored. */
   backface-visibility: hidden;
@@ -523,7 +565,12 @@ footer p {
 [data-view="3d"] .planet-card {
   opacity: 0.4;
   cursor: pointer;
-  transition: opacity 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease,
+    border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+[data-view="3d"] .planet-card.no-turn {
+  transition: none;
 }
 
 [data-view="3d"] .planet-card:hover {
