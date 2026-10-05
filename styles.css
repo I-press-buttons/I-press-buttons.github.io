@@ -250,6 +250,7 @@ h1 {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -720,6 +721,12 @@ footer p {
 @media (max-width: 760px) {
   :root {
     --shell: min(1080px, 100% - 2rem);
+  }
+
+  /* Three tabs have to fit across a phone. */
+  .tab {
+    padding: 0.5rem 0.8rem;
+    letter-spacing: 0.06em;
   }
 
   .planet-card {
