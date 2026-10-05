@@ -4,16 +4,22 @@ The source of my personal homepage, live at
 **<https://i-press-buttons.github.io>**.
 
 A space-themed, single-page list of the things I have built. Plain HTML, CSS and
-one small script — no build step, no dependencies, and no external requests.
+two small scripts — no build step, no dependencies, and no external requests.
 GitHub Pages serves the files in this repo exactly as they are, so a push is a
 deploy.
 
 The flat list is the default. A **3D view** switch in the top corner turns the
-same cards into a game-style level select: they stand on a turntable over a
-glowing grid, and the arrow keys, the on-screen arrows or a click on a planet
-turn it. The choice is remembered per browser. With reduced motion set in the
-OS, the 3D view snaps between cards instead of turning. Without JavaScript the
-switch never appears and the page is the flat list.
+same cards into a star map: each project is a planet with its name above it,
+and a small ship flies between them. A project's description only appears once
+the ship has arrived. One press of an arrow key, a tap on the on-screen arrows
+or a click on a planet sends the ship on a short flight, and Enter opens the
+project it is parked at. The choice of view is remembered per browser. With
+reduced motion set in the OS, the ship arrives straight away instead of flying.
+Without JavaScript the switch never appears and the page is the flat list.
+
+Above the list, **Networking** and **Games** tabs show one category at a time,
+in both views. The last tab picked is remembered too. Without JavaScript the
+tabs never appear and every project shows.
 
 ## Files
 
@@ -21,7 +27,8 @@ switch never appears and the page is the flat list.
 | --- | --- |
 | `index.html` | The whole page. Every planet, the rocket and the asteroids are inline SVG. |
 | `styles.css` | The starfield, the layout, the animations and the 3D view. |
-| `view3d.js` | The 3D view switch and turntable. It reads the cards from the page. |
+| `tabs.js` | The Networking / Games tabs. They read each card's `data-category`. |
+| `view3d.js` | The 3D view switch, the star map and the ship. It reads the cards from the page. |
 | `favicon.svg` | The tab icon. |
 | `.nojekyll` | Stops Pages running the files through Jekyll. |
 
@@ -32,8 +39,9 @@ to install and nothing to run.
 
 ## Adding a project
 
-Copy an existing `<article class="planet-card">` block in `index.html`, paste it
-into `.fleet`, and change four things:
+Copy an existing `<article class="planet-card" data-category="…">` block in
+`index.html`, paste it into `.fleet`, set `data-category` to the tab it belongs
+under (`networking` or `games`), and change four things:
 
 1. `<h3>` — the project name.
 2. `.blurb` — one or two sentences on what it does.

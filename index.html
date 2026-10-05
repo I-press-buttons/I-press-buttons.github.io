@@ -12,6 +12,7 @@
     <meta name="theme-color" content="#05060f" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="stylesheet" href="styles.css" />
+    <script src="tabs.js" defer></script>
     <script src="view3d.js" defer></script>
 
     <meta property="og:type" content="website" />
@@ -151,19 +152,30 @@
     </header>
 
     <main>
+      <!-- Category tabs. tabs.js unhides them and shows only the cards whose
+           data-category matches; without JavaScript every card shows. -->
+      <div class="tabs" role="tablist" aria-label="Project categories" hidden>
+        <button type="button" class="tab" role="tab" id="tab-networking" data-category="networking" aria-controls="fleet">
+          Networking
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-games" data-category="games" aria-controls="fleet">
+          Games
+        </button>
+      </div>
+
       <h2 class="section-heading">Projects</h2>
 
       <!-- Game HUD for the 3D view. view3d.js unhides it and fills it in from
            the cards in .fleet, which stay the one list of projects. -->
       <div class="hud" hidden>
-        <p class="hud-title">Select a project</p>
+        <p class="hud-title">Choose a destination</p>
         <p class="hud-count" aria-live="polite"></p>
       </div>
 
       <div class="floor" aria-hidden="true"></div>
 
-      <div class="fleet">
-        <article class="planet-card">
+      <div class="fleet" id="fleet">
+        <article class="planet-card" data-category="networking">
           <div class="planet-slot" aria-hidden="true">
             <svg class="planet" viewBox="0 0 220 220" width="220" height="220">
               <defs>
@@ -210,7 +222,7 @@
           </div>
         </article>
 
-        <article class="planet-card">
+        <article class="planet-card" data-category="networking">
           <div class="planet-slot" aria-hidden="true">
             <svg class="planet ringed" viewBox="0 0 220 220" width="220" height="220">
               <defs>
@@ -264,7 +276,7 @@
           </div>
         </article>
 
-        <article class="planet-card">
+        <article class="planet-card" data-category="networking">
           <div class="planet-slot" aria-hidden="true">
             <svg class="planet" viewBox="0 0 220 220" width="220" height="220">
               <defs>
@@ -312,7 +324,7 @@
           </div>
         </article>
 
-        <article class="planet-card">
+        <article class="planet-card" data-category="networking">
           <div class="planet-slot" aria-hidden="true">
             <svg class="planet" viewBox="0 0 220 220" width="220" height="220">
               <defs>
@@ -354,7 +366,7 @@
           </div>
         </article>
 
-        <article class="planet-card">
+        <article class="planet-card" data-category="games">
           <div class="planet-slot" aria-hidden="true">
             <svg class="planet ringed" viewBox="0 0 220 220" width="220" height="220">
               <defs>
@@ -411,7 +423,7 @@
           </div>
         </article>
 
-        <article class="planet-card">
+        <article class="planet-card" data-category="games">
           <div class="planet-slot" aria-hidden="true">
             <svg class="planet" viewBox="0 0 220 220" width="220" height="220">
               <defs>
@@ -462,9 +474,9 @@
       </div>
 
       <div class="hud-controls" hidden>
-        <button type="button" class="hud-button" data-step="-1" aria-label="Previous project">←</button>
-        <p class="hud-hint">Use the arrows, or click a planet, to choose. Enter opens it.</p>
-        <button type="button" class="hud-button" data-step="1" aria-label="Next project">→</button>
+        <button type="button" class="hud-button" data-step="-1" aria-label="Fly to the previous planet">←</button>
+        <p class="hud-hint">Use the arrows, or click a planet, to fly there. Enter opens the project.</p>
+        <button type="button" class="hud-button" data-step="1" aria-label="Fly to the next planet">→</button>
       </div>
     </main>
 
