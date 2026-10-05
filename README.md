@@ -17,9 +17,9 @@ project it is parked at. The choice of view is remembered per browser. With
 reduced motion set in the OS, the ship arrives straight away instead of flying.
 Without JavaScript the switch never appears and the page is the flat list.
 
-Above the list, **Networking** and **Games** tabs show one category at a time,
-in both views. The last tab picked is remembered too. Without JavaScript the
-tabs never appear and every project shows.
+Above the list, **Networking**, **Games** and **Home Life** tabs show one
+category at a time, in both views. The last tab picked is remembered too.
+Without JavaScript the tabs never appear and every project shows.
 
 ## Files
 
@@ -41,7 +41,7 @@ to install and nothing to run.
 
 Copy an existing `<article class="planet-card" data-category="…">` block in
 `index.html`, paste it into `.fleet`, set `data-category` to the tab it belongs
-under (`networking` or `games`), and change four things:
+under (`networking`, `games` or `home-life`), and change four things:
 
 1. `<h3>` — the project name.
 2. `.blurb` — one or two sentences on what it does.
