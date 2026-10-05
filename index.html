@@ -12,6 +12,7 @@
     <meta name="theme-color" content="#05060f" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="stylesheet" href="styles.css" />
+    <script src="view3d.js" defer></script>
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Chris's Project List" />
@@ -81,6 +82,21 @@
     </div>
 
     <header class="masthead">
+      <!-- The 3D switch. It stays hidden unless view3d.js runs, so without
+           JavaScript the page is exactly the flat list. -->
+      <div class="view-switch" hidden>
+        <span id="view-switch-label">3D view</span>
+        <button
+          type="button"
+          class="switch"
+          role="switch"
+          aria-checked="false"
+          aria-labelledby="view-switch-label"
+        >
+          <span class="knob"></span>
+        </button>
+      </div>
+
       <svg
         class="rocket"
         viewBox="0 0 80 200"
@@ -136,6 +152,15 @@
 
     <main>
       <h2 class="section-heading">Projects</h2>
+
+      <!-- Game HUD for the 3D view. view3d.js unhides it and fills it in from
+           the cards in .fleet, which stay the one list of projects. -->
+      <div class="hud" hidden>
+        <p class="hud-title">Select a project</p>
+        <p class="hud-count" aria-live="polite"></p>
+      </div>
+
+      <div class="floor" aria-hidden="true"></div>
 
       <div class="fleet">
         <article class="planet-card">
@@ -434,6 +459,12 @@
             </p>
           </div>
         </article>
+      </div>
+
+      <div class="hud-controls" hidden>
+        <button type="button" class="hud-button" data-step="-1" aria-label="Previous project">←</button>
+        <p class="hud-hint">Use the arrows, or click a planet, to choose. Enter opens it.</p>
+        <button type="button" class="hud-button" data-step="1" aria-label="Next project">→</button>
       </div>
     </main>
 

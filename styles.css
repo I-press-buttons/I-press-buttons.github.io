@@ -381,6 +381,238 @@ footer p {
   margin: 0;
 }
 
+/* --------------------------------------------------------- the 3D switch */
+
+/* Sits in the top corner of the header. view3d.js unhides it; without
+   JavaScript there is nothing to switch, so it never shows. */
+.view-switch {
+  position: absolute;
+  top: clamp(1rem, 2.5vw, 1.5rem);
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.view-switch[hidden] {
+  display: none;
+}
+
+.switch {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--card-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.switch[aria-checked="true"] {
+  border-color: rgba(95, 211, 196, 0.6);
+  background: rgba(95, 211, 196, 0.25);
+}
+
+.switch[aria-checked="true"] .knob {
+  transform: translateX(20px);
+  background: var(--teal);
+}
+
+/* ------------------------------------------------------------- the 3D view */
+
+/* Everything below applies only once view3d.js has set data-view="3d" on
+   <html>. The same .planet-card articles are rearranged onto a turntable:
+   each stands at its own angle round a ring (--i × --angle), and the ring
+   turns by --step cards. view3d.js measures --radius to fit the cards. */
+
+.hud,
+.hud-controls,
+.floor {
+  display: none;
+}
+
+/* The ring and the floor are wider than the screen. body already hides the
+   sideways overflow, but phones still widen the page to fit it unless it is
+   clipped outright. */
+[data-view="3d"],
+[data-view="3d"] body {
+  overflow-x: clip;
+}
+
+[data-view="3d"] main {
+  perspective: 1600px;
+  perspective-origin: 50% 40%;
+}
+
+[data-view="3d"] .hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.hud-title {
+  margin: 0;
+  font-size: clamp(1.2rem, 1rem + 1vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 0 18px rgba(95, 211, 196, 0.45);
+}
+
+.hud-count {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: var(--teal);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-view="3d"] .fleet {
+  position: relative;
+  display: block;
+  padding: 0;
+  transform-style: preserve-3d;
+  transform: translateZ(calc(var(--radius, 400px) * -1))
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(calc(var(--step, 0) * var(--angle) * -1 + var(--tilt-y, 0deg)));
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+[data-view="3d"] .planet-card,
+[data-view="3d"] .planet-card:hover {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(300px, 74vw);
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  transform: translate(-50%, -50%) rotateY(calc(var(--i) * var(--angle)))
+    translateZ(var(--radius, 400px));
+  /* Cards turned away are not drawn, so their text never shows mirrored. */
+  backface-visibility: hidden;
+  backdrop-filter: none;
+  background: linear-gradient(
+    180deg,
+    rgba(24, 28, 52, 0.94),
+    rgba(10, 12, 28, 0.94)
+  );
+}
+
+[data-view="3d"] .planet-card {
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+[data-view="3d"] .planet-card:hover {
+  opacity: 0.7;
+}
+
+[data-view="3d"] .planet-card.is-active {
+  opacity: 1;
+  cursor: auto;
+  border-color: rgba(95, 211, 196, 0.6);
+  box-shadow: 0 0 0 1px rgba(95, 211, 196, 0.2),
+    0 0 46px rgba(95, 211, 196, 0.2), 0 30px 60px rgba(0, 0, 0, 0.6);
+}
+
+[data-view="3d"] .planet {
+  max-width: 150px;
+}
+
+[data-view="3d"] .blurb {
+  margin-inline: auto;
+  font-size: 0.92rem;
+}
+
+[data-view="3d"] .links {
+  justify-content: center;
+}
+
+/* A glowing grid floor, laid flat and running back to the horizon, drawn
+   under the turntable. */
+[data-view="3d"] .floor {
+  display: block;
+  position: absolute;
+  left: 50%;
+  bottom: 6.5rem;
+  width: 2400px;
+  height: 1400px;
+  margin-left: -1200px;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  transform: rotateX(82deg);
+  background-image: linear-gradient(rgba(95, 211, 196, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(95, 211, 196, 0.4) 1px, transparent 1px);
+  background-size: 80px 80px;
+  -webkit-mask-image: radial-gradient(
+    ellipse 40% 70% at 50% 100%,
+    #000 10%,
+    transparent 70%
+  );
+  mask-image: radial-gradient(
+    ellipse 40% 70% at 50% 100%,
+    #000 10%,
+    transparent 70%
+  );
+}
+
+[data-view="3d"] .hud-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.5rem 0 clamp(2.5rem, 6vw, 4rem);
+}
+
+.hud-button {
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid rgba(95, 211, 196, 0.5);
+  border-radius: 50%;
+  background: rgba(95, 211, 196, 0.08);
+  color: var(--teal);
+  font: inherit;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.hud-button:hover {
+  background: rgba(95, 211, 196, 0.2);
+}
+
+.hud-hint {
+  margin: 0;
+  max-width: 32ch;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--ink-faint);
+}
+
 /* --------------------------------------------------------------- narrower */
 
 @media (max-width: 760px) {
