@@ -140,6 +140,197 @@
       <div class="fleet">
         <article class="planet-card">
           <div class="planet-slot" aria-hidden="true">
+            <svg class="planet" viewBox="0 0 220 220" width="220" height="220">
+              <defs>
+                <radialGradient id="coral" cx="34%" cy="30%" r="76%">
+                  <stop offset="0%" stop-color="#ffc2b0" />
+                  <stop offset="44%" stop-color="#e2604a" />
+                  <stop offset="100%" stop-color="#5a1a24" />
+                </radialGradient>
+                <clipPath id="coralClip">
+                  <circle cx="110" cy="110" r="68" />
+                </clipPath>
+              </defs>
+              <circle cx="110" cy="110" r="68" fill="url(#coral)" />
+              <g clip-path="url(#coralClip)" opacity=".35">
+                <ellipse cx="110" cy="82" rx="84" ry="7" fill="#ffd9cc" />
+                <ellipse cx="110" cy="120" rx="84" ry="10" fill="#8f2c2c" />
+                <ellipse cx="110" cy="150" rx="84" ry="6" fill="#ffb59f" />
+              </g>
+              <g clip-path="url(#coralClip)" opacity=".32">
+                <circle cx="88" cy="104" r="12" fill="#5e1b1b" />
+                <circle cx="136" cy="134" r="8" fill="#5e1b1b" />
+                <circle cx="128" cy="80" r="5" fill="#5e1b1b" />
+              </g>
+            </svg>
+          </div>
+
+          <div class="planet-text">
+            <h3>pathwatch</h3>
+            <p class="blurb">
+              A self-hosted network monitor that watches the path to the hosts
+              you care about, hop by hop, alongside real HTTP, TCP and DNS
+              timing, so you can tell a router rate-limiting pings from a
+              connection that is actually broken.
+            </p>
+            <p class="stack">Go · SQLite · Docker</p>
+            <p class="links">
+              <a
+                class="link primary"
+                href="https://github.com/I-press-buttons/pathwatch"
+              >
+                View the source
+              </a>
+            </p>
+          </div>
+        </article>
+
+        <article class="planet-card">
+          <div class="planet-slot" aria-hidden="true">
+            <svg class="planet ringed" viewBox="0 0 220 220" width="220" height="220">
+              <defs>
+                <radialGradient id="glacier" cx="35%" cy="30%" r="75%">
+                  <stop offset="0%" stop-color="#d6ecff" />
+                  <stop offset="45%" stop-color="#4f8fe0" />
+                  <stop offset="100%" stop-color="#16295e" />
+                </radialGradient>
+                <clipPath id="glacierClip">
+                  <circle cx="110" cy="110" r="62" />
+                </clipPath>
+              </defs>
+              <ellipse
+                class="ring"
+                cx="110" cy="110" rx="100" ry="28"
+                fill="none" stroke="#a9cdf5" stroke-opacity=".5" stroke-width="6"
+                transform="rotate(14 110 110)"
+              />
+              <circle cx="110" cy="110" r="62" fill="url(#glacier)" />
+              <g clip-path="url(#glacierClip)" opacity=".36">
+                <ellipse cx="110" cy="80" rx="80" ry="8" fill="#eaf5ff" />
+                <ellipse cx="110" cy="108" rx="80" ry="6" fill="#1d3f86" />
+                <ellipse cx="110" cy="134" rx="80" ry="10" fill="#bfdcff" />
+              </g>
+              <path
+                class="ring-front"
+                d="M10 110 A100 28 0 0 0 210 110"
+                fill="none" stroke="#c4defa" stroke-opacity=".75" stroke-width="6"
+                transform="rotate(14 110 110)"
+              />
+            </svg>
+          </div>
+
+          <div class="planet-text">
+            <h3>NordVPN for OpenWrt (LuCI Extras)</h3>
+            <p class="blurb">
+              My fork of nordvpn-luci: run NordVPN on an OpenWrt router from the
+              LuCI web page, choose which devices, networks or websites use it,
+              and let the router rotate and repair tunnels by itself. Adds
+              multiple tunnels, Double VPN and a kill switch.
+            </p>
+            <p class="stack">Shell · JavaScript · LuCI · WireGuard</p>
+            <p class="links">
+              <a
+                class="link primary"
+                href="https://github.com/I-press-buttons/nordvpn-luci-extras"
+              >
+                View the source
+              </a>
+            </p>
+          </div>
+        </article>
+
+        <article class="planet-card">
+          <div class="planet-slot" aria-hidden="true">
+            <svg class="planet" viewBox="0 0 220 220" width="220" height="220">
+              <defs>
+                <radialGradient id="violet" cx="34%" cy="28%" r="78%">
+                  <stop offset="0%" stop-color="#ecd2ff" />
+                  <stop offset="44%" stop-color="#9a5fd6" />
+                  <stop offset="100%" stop-color="#2c1650" />
+                </radialGradient>
+                <clipPath id="violetClip">
+                  <circle cx="110" cy="110" r="70" />
+                </clipPath>
+              </defs>
+              <circle cx="110" cy="110" r="70" fill="url(#violet)" />
+              <g clip-path="url(#violetClip)" opacity=".38">
+                <ellipse cx="110" cy="76" rx="86" ry="9" fill="#f5e6ff" />
+                <ellipse cx="110" cy="114" rx="86" ry="11" fill="#e48ac0" />
+                <ellipse cx="110" cy="148" rx="86" ry="8" fill="#22103f" />
+              </g>
+              <g clip-path="url(#violetClip)" opacity=".3">
+                <circle cx="140" cy="98" r="12" fill="#3d1d66" />
+                <circle cx="86" cy="134" r="8" fill="#3d1d66" />
+              </g>
+              <circle class="moon" cx="34" cy="54" r="11" fill="#f3d9b0" />
+              <circle cx="31" cy="51" r="3.5" fill="#d8b98a" opacity=".8" />
+            </svg>
+          </div>
+
+          <div class="planet-text">
+            <h3>Hearthboard</h3>
+            <p class="blurb">
+              A drag-and-drop family wall calendar for a kitchen TV, running in
+              Docker on a Synology NAS. Two-way Apple and Google calendars,
+              Apple Reminders, Synology Photos, weather, countdowns, meal plans
+              and checklists, all arranged from your phone.
+            </p>
+            <p class="stack">React · TypeScript · Fastify · SQLite · Docker</p>
+            <p class="links">
+              <a
+                class="link primary"
+                href="https://github.com/I-press-buttons/hearthboard"
+              >
+                View the source
+              </a>
+            </p>
+          </div>
+        </article>
+
+        <article class="planet-card">
+          <div class="planet-slot" aria-hidden="true">
+            <svg class="planet" viewBox="0 0 220 220" width="220" height="220">
+              <defs>
+                <radialGradient id="moss" cx="35%" cy="30%" r="76%">
+                  <stop offset="0%" stop-color="#e0f7b4" />
+                  <stop offset="45%" stop-color="#6fae4a" />
+                  <stop offset="100%" stop-color="#173b2a" />
+                </radialGradient>
+                <clipPath id="mossClip">
+                  <circle cx="110" cy="110" r="66" />
+                </clipPath>
+              </defs>
+              <circle cx="110" cy="110" r="66" fill="url(#moss)" />
+              <g clip-path="url(#mossClip)" opacity=".34">
+                <ellipse cx="110" cy="84" rx="82" ry="10" fill="#f0ffd0" />
+                <ellipse cx="110" cy="116" rx="82" ry="7" fill="#2f5e2a" />
+                <ellipse cx="110" cy="144" rx="82" ry="9" fill="#c4e58e" />
+              </g>
+              <g clip-path="url(#mossClip)" opacity=".3">
+                <circle cx="132" cy="112" r="13" fill="#1f4424" />
+                <circle cx="84" cy="88" r="7" fill="#1f4424" />
+                <circle cx="96" cy="140" r="5" fill="#1f4424" />
+              </g>
+            </svg>
+          </div>
+
+          <div class="planet-text">
+            <h3>OpenWrt NordVPN Config</h3>
+            <p class="blurb">
+              A NordVPN WireGuard manager for stock OpenWrt, driven from LuCI:
+              sign in with a token, pick the best server by load and ping, run
+              as many tunnels as you like and put each device on its own, with
+              a per-tunnel kill switch and leak protection.
+            </p>
+            <p class="stack">Shell · JavaScript · LuCI · WireGuard · nftables</p>
+            <p class="links">
+              <span class="link muted">Source is private</span>
+            </p>
+          </div>
+        </article>
+
+        <article class="planet-card">
+          <div class="planet-slot" aria-hidden="true">
             <svg class="planet ringed" viewBox="0 0 220 220" width="220" height="220">
               <defs>
                 <radialGradient id="amber" cx="35%" cy="30%" r="75%">
