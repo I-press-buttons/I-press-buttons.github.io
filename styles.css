@@ -480,10 +480,11 @@ footer p {
 /* ------------------------------------------------------------- the 3D view */
 
 /* Everything below applies only once view3d.js has set data-view="3d" on
-   <html>. The same .planet-card articles are rearranged onto a turntable:
-   each stands --d steps round a ring from the card in front (--d × --angle),
-   and view3d.js updates --d as the table turns. It also measures --radius to
-   fit the cards. */
+   <html>. The same .planet-card articles become planets on a star map: each
+   card is placed by view3d.js (left/top) so that its planet sits on the map,
+   with its name above it. Only the planet the ship has reached
+   (.is-arrived) shows its description. --camera slides the whole map so the
+   ship stays in view. */
 
 .hud,
 .hud-controls,
@@ -491,7 +492,7 @@ footer p {
   display: none;
 }
 
-/* The ring and the floor are wider than the screen. body already hides the
+/* The map and the floor are wider than the screen. body already hides the
    sideways overflow, but phones still widen the page to fit it unless it is
    clipped outright. */
 [data-view="3d"],
@@ -534,72 +535,126 @@ footer p {
   position: relative;
   display: block;
   padding: 0;
-  transform-style: preserve-3d;
-  transform: translateZ(calc(var(--radius, 400px) * -1))
-    rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
-  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform: translateX(var(--camera, 0px));
 }
 
+/* The card itself goes see-through; its name, planet and description are
+   laid out as one column, name first. */
 [data-view="3d"] .planet-card,
 [data-view="3d"] .planet-card:hover {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: min(300px, 74vw);
+  width: min(260px, 64vw);
   grid-template-columns: minmax(0, 1fr);
   justify-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  padding: 1rem;
   text-align: center;
-  transform: translate(-50%, -50%) rotateY(calc(var(--d, 0) * var(--angle)))
-    translateZ(var(--radius, 400px));
-  /* Cards turned away are not drawn, so their text never shows mirrored. */
-  backface-visibility: hidden;
+  border-color: transparent;
+  background: transparent;
   backdrop-filter: none;
-  background: linear-gradient(
-    180deg,
-    rgba(24, 28, 52, 0.94),
-    rgba(10, 12, 28, 0.94)
-  );
-}
-
-[data-view="3d"] .planet-card {
-  opacity: 0.4;
+  transform: none;
   cursor: pointer;
-  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease,
-    border-color 0.5s ease, box-shadow 0.5s ease;
+  transition: background-color 0.5s ease, border-color 0.5s ease,
+    box-shadow 0.5s ease;
 }
 
-[data-view="3d"] .planet-card.no-turn {
-  transition: none;
+[data-view="3d"] .planet-text {
+  display: contents;
 }
 
-[data-view="3d"] .planet-card:hover {
-  opacity: 0.7;
-}
-
-[data-view="3d"] .planet-card.is-active {
-  opacity: 1;
-  cursor: auto;
-  border-color: rgba(95, 211, 196, 0.6);
-  box-shadow: 0 0 0 1px rgba(95, 211, 196, 0.2),
-    0 0 46px rgba(95, 211, 196, 0.2), 0 30px 60px rgba(0, 0, 0, 0.6);
+[data-view="3d"] .planet-text h3 {
+  order: -1;
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-shadow: 0 0 12px rgba(169, 139, 255, 0.45);
+  transition: color 0.4s ease;
 }
 
 [data-view="3d"] .planet {
-  max-width: 150px;
+  width: 130px;
+}
+
+[data-view="3d"] .blurb,
+[data-view="3d"] .stack,
+[data-view="3d"] .links {
+  margin: 0;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease, visibility 0s 0.4s;
 }
 
 [data-view="3d"] .blurb {
-  margin-inline: auto;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
 [data-view="3d"] .links {
   justify-content: center;
 }
 
+/* Arrived: the card lights up as a panel and the description fades in. */
+[data-view="3d"] .planet-card.is-arrived {
+  cursor: auto;
+  border-color: rgba(95, 211, 196, 0.45);
+  background: linear-gradient(
+    180deg,
+    rgba(24, 28, 52, 0.5),
+    rgba(10, 12, 28, 0.94) 45%
+  );
+  box-shadow: 0 0 46px rgba(95, 211, 196, 0.14), 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-view="3d"] .is-arrived h3 {
+  color: var(--teal);
+}
+
+[data-view="3d"] .is-arrived :is(.blurb, .stack, .links) {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
+}
+
+[data-view="3d"] .planet-card:not(.is-arrived):hover h3 {
+  color: var(--ink);
+}
+
+/* The ship. view3d.js moves it with a transform from the map's top-left;
+   it is drawn so that point is the middle of the hull. */
+.ship {
+  display: none;
+}
+
+[data-view="3d"] .ship {
+  display: block;
+  position: absolute;
+  top: -45px;
+  left: -18px;
+  z-index: 2;
+  pointer-events: none;
+  transform-origin: 18px 45px;
+  filter: drop-shadow(0 0 14px rgba(255, 157, 60, 0.4));
+}
+
+[data-view="3d"] .ship svg {
+  display: block;
+}
+
+.ship .plume {
+  transform-origin: 50% 64%;
+  transform: scaleY(0.45);
+  animation: none;
+  transition: transform 0.4s ease;
+}
+
+.ship.is-flying .plume {
+  transform: scaleY(1.25);
+}
+
 /* A glowing grid floor, laid flat and running back to the horizon, drawn
-   under the turntable. */
+   under the map. view3d.js slides its grid as the ship flies. */
 [data-view="3d"] .floor {
   display: block;
   position: absolute;

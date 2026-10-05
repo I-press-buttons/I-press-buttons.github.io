@@ -1,14 +1,19 @@
-/* The optional 3D view: the project cards stand on a turntable, game
-   level-select style, and the arrows spin it. The flat list is the default and
-   the switch at the top of the page turns this on or off; the choice is
-   remembered. The cards in .fleet are the only copy of each project, so a new
-   card shows up in both views with nothing else to change. Only the cards the
-   category tabs leave visible go on the turntable. */
+/* The optional 3D view: the projects become planets on a star map, each with
+   its name above it, and a small ship flies between them. A project's
+   description only shows once the ship has arrived. One press of an arrow key
+   (or the on-screen arrows, or a click on a planet) sends the ship on, and the
+   view follows it. The flat list is the default and the switch at the top of
+   the page turns this on or off; the choice is remembered.
+
+   The cards in .fleet are the only copy of each project, so a new card shows
+   up in both views with nothing else to change. Only the cards the category
+   tabs leave visible become planets. */
 
 (function () {
   "use strict";
 
   var STORAGE_KEY = "view";
+  var FLIGHT_MS = 2400; // one hop; longer trips take a little longer
   var root = document.documentElement;
 
   function savedView() {
@@ -27,8 +32,32 @@
     }
   }
 
+  // The ship: a smaller copy of the header rocket, with its own gradient ids.
+  var SHIP_SVG =
+    '<svg viewBox="0 0 80 200" width="36" height="90" aria-hidden="true">' +
+    "<defs>" +
+    '<linearGradient id="ship-flame" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="#fff0c2"/>' +
+    '<stop offset="35%" stop-color="#ffb03c" stop-opacity=".9"/>' +
+    '<stop offset="72%" stop-color="#ff6b3d" stop-opacity=".5"/>' +
+    '<stop offset="100%" stop-color="#ff4d3d" stop-opacity="0"/>' +
+    "</linearGradient>" +
+    '<linearGradient id="ship-hull" x1="0" y1="0" x2="1" y2="0">' +
+    '<stop offset="0%" stop-color="#c3cbe6"/>' +
+    '<stop offset="42%" stop-color="#f4f7ff"/>' +
+    '<stop offset="100%" stop-color="#8f98b8"/>' +
+    "</linearGradient>" +
+    "</defs>" +
+    '<path class="plume" d="M40 128 C54 152 52 176 40 198 C28 176 26 152 40 128 Z" fill="url(#ship-flame)"/>' +
+    '<path d="M40 8 C58 34 66 74 66 104 L66 132 L14 132 L14 104 C14 74 22 34 40 8 Z" fill="url(#ship-hull)"/>' +
+    '<path d="M14 104 L2 140 L14 132 Z" fill="#e05a4a"/>' +
+    '<path d="M66 104 L78 140 L66 132 Z" fill="#e05a4a"/>' +
+    '<circle cx="40" cy="62" r="13" fill="#0d1730"/>' +
+    '<circle cx="40" cy="62" r="9" fill="#5fd3c4" opacity=".85"/>' +
+    '<rect x="14" y="122" width="52" height="10" rx="3" fill="#b9c1dd"/>' +
+    "</svg>";
+
   document.addEventListener("DOMContentLoaded", function () {
-    var main = document.querySelector("main");
     var fleet = document.querySelector(".fleet");
     var allCards = Array.prototype.slice.call(fleet.querySelectorAll(".planet-card"));
     var switchWrap = document.querySelector(".view-switch");
@@ -36,95 +65,145 @@
     var hud = document.querySelector(".hud");
     var hudCount = hud.querySelector(".hud-count");
     var controls = document.querySelector(".hud-controls");
+    var floor = document.querySelector(".floor");
     var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-    // Each card stands at --d steps round the table from the one in front,
-    // ANGLE apart. Cards two or more steps away face backwards and are not
-    // drawn, so any number of cards works, and a tab with two looks the same
-    // as one with six.
-    var ANGLE = 60;
-    var cards = [];
-    var n = 0;
-    var active = 0;
+    var ship = document.createElement("div");
+    ship.className = "ship";
+    ship.setAttribute("aria-hidden", "true");
+    ship.innerHTML = SHIP_SVG;
+    fleet.appendChild(ship);
 
-    fleet.style.setProperty("--angle", ANGLE + "deg");
-
-    function offset(i) {
-      var d = (((i - active) % n) + n) % n;
-      return d > n / 2 ? d - n : d;
-    }
+    var cards = []; // the visible cards, in order
+    var spots = []; // for each: the planet's centre and the ship's parking spot
+    var current = 0; // the planet the ship is at, or flying to
+    var shipPos = { x: 0, y: 0 };
+    var flight = null; // { from, to, control, start, duration } while flying
 
     function is3d() {
       return root.dataset.view === "3d";
     }
 
-    // The ring's radius has to fit the cards side by side, and the stage has
-    // to be tall enough for the tallest card, so both are measured, not set.
+    // Lay the planets out left to right on a gentle wave. Each card is placed
+    // so that its planet, not its top edge, lands on the spot, because the
+    // names above the planets wrap to different heights.
     function layout() {
-      if (!is3d()) return;
-      if (!n) return;
-      var width = cards[0].offsetWidth;
-      var tallest = 0;
-      cards.forEach(function (card) {
-        tallest = Math.max(tallest, card.offsetHeight);
+      if (!is3d() || !cards.length) return;
+      var gap = Math.min(340, Math.max(250, window.innerWidth * 0.7));
+      var offsets = cards.map(function (card) {
+        var slot = card.querySelector(".planet-slot");
+        return slot.offsetTop + slot.offsetHeight / 2;
       });
-      var radius = (width / 2 + 48) / Math.tan(((ANGLE / 2) * Math.PI) / 180);
-      fleet.style.setProperty("--radius", Math.round(radius) + "px");
-      fleet.style.height = tallest + 60 + "px";
+      var top = Math.max.apply(null, offsets) + 40;
+      var bottom = 0;
+      spots = cards.map(function (card, i) {
+        var x = i * gap;
+        var y = top + (i % 2 ? 34 : -6);
+        card.style.left = x - card.offsetWidth / 2 + "px";
+        card.style.top = y - offsets[i] + "px";
+        bottom = Math.max(bottom, y - offsets[i] + card.offsetHeight);
+        var radius = card.querySelector(".planet-slot").offsetWidth / 2;
+        return { x: x, y: y, park: { x: x - radius - 26, y: y + 4 } };
+      });
+      fleet.style.height = bottom + 30 + "px";
     }
 
-    function render() {
-      if (!n) return;
+    function placeShip(pos, angle) {
+      shipPos = pos;
+      ship.style.transform =
+        "translate(" + pos.x + "px," + pos.y + "px) rotate(" + angle + "deg)";
+      // The view follows the ship: the whole map shifts so the ship sits just
+      // left of centre, leaving its planet in the middle, and the floor grid
+      // drifts with it.
+      var spot = spots[current];
+      var camera = fleet.clientWidth / 2 - (pos.x + (spot.x - spot.park.x));
+      fleet.style.setProperty("--camera", camera + "px");
+      floor.style.backgroundPosition = camera * 0.6 + "px 0";
+    }
+
+    function name(card) {
+      return card.querySelector("h3").textContent.trim();
+    }
+
+    function arrive() {
+      flight = null;
+      ship.classList.remove("is-flying");
+      placeShip(spots[current].park, 0);
       cards.forEach(function (card, i) {
-        var before = Number(card.style.getPropertyValue("--d")) || 0;
-        var after = offset(i);
-        // A card wrapping round from one end to the other would otherwise
-        // sweep across the front on its way; it jumps there unseen instead.
-        if (Math.abs(after - before) > 1) {
-          card.classList.add("no-turn");
-          card.style.setProperty("--d", after);
-          void card.offsetWidth;
-          card.classList.remove("no-turn");
-        } else {
-          card.style.setProperty("--d", after);
-        }
-        card.classList.toggle("is-active", i === active);
+        card.classList.toggle("is-arrived", i === current);
       });
       hudCount.textContent =
-        "Project " + (active + 1) + " of " + n + ": " +
-        cards[active].querySelector("h3").textContent.trim();
+        "Planet " + (current + 1) + " of " + cards.length + ": " + name(cards[current]);
     }
 
-    function select(index) {
-      active = ((index % n) + n) % n;
-      render();
+    function frame(now) {
+      if (!flight) return;
+      var t = Math.min(1, (now - flight.start) / flight.duration);
+      // Ease in and out, along a curve that arcs up between the planets.
+      var e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      var a = flight.from;
+      var c = flight.control;
+      var b = flight.to;
+      var u = 1 - e;
+      var x = u * u * a.x + 2 * u * e * c.x + e * e * b.x;
+      var y = u * u * a.y + 2 * u * e * c.y + e * e * b.y;
+      var dx = 2 * u * (c.x - a.x) + 2 * e * (b.x - c.x);
+      var dy = 2 * u * (c.y - a.y) + 2 * e * (b.y - c.y);
+      // The rocket is drawn nose up, so turn it to face the way it is going.
+      var angle = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
+      placeShip({ x: x, y: y }, angle);
+      if (t < 1) requestAnimationFrame(frame);
+      else arrive();
     }
 
-    function turn(by) {
-      select(active + by);
+    function flyTo(index) {
+      if (!cards.length) return;
+      index = ((index % cards.length) + cards.length) % cards.length;
+      if (index === current && !flight) return;
+      var hops = Math.abs(index - current) || 1;
+      current = index;
+      cards.forEach(function (card) {
+        card.classList.remove("is-arrived");
+      });
+      hudCount.textContent = "Flying to " + name(cards[current]) + "…";
+
+      // With reduced motion asked for, the ship is simply there.
+      if (reduceMotion.matches) {
+        arrive();
+        return;
+      }
+      var from = shipPos;
+      var to = spots[current].park;
+      var lift = 110 + 30 * Math.min(hops, 4);
+      var running = flight !== null;
+      flight = {
+        from: from,
+        to: to,
+        control: { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - lift },
+        start: performance.now(),
+        duration: Math.min(FLIGHT_MS + 500 * (hops - 1), 4200),
+      };
+      ship.classList.add("is-flying");
+      // A press mid-flight just re-aims the ship; the loop already running
+      // picks up the new course.
+      if (!running) requestAnimationFrame(frame);
     }
 
-    // Rebuild from whichever cards are visible now. A hidden card keeps no
-    // place on the table, and the first visible card comes to the front.
+    // Rebuild from whichever cards are visible now, with the ship parked at
+    // the first planet.
     function refresh() {
       cards = allCards.filter(function (card) {
         return !card.hidden;
       });
-      n = cards.length;
-      active = 0;
+      current = 0;
+      flight = null;
       allCards.forEach(function (card) {
-        card.classList.add("no-turn");
-        card.classList.remove("is-active");
-        card.style.removeProperty("--d");
+        card.classList.remove("is-arrived");
       });
-      if (is3d()) {
+      if (is3d() && cards.length) {
         layout();
-        render();
+        arrive();
       }
-      void fleet.offsetWidth;
-      allCards.forEach(function (card) {
-        card.classList.remove("no-turn");
-      });
     }
 
     fleet.addEventListener("fleetchange", refresh);
@@ -137,8 +216,12 @@
       if (view === "3d") {
         refresh();
       } else {
+        flight = null;
         fleet.style.height = "";
-        resetTilt();
+        allCards.forEach(function (card) {
+          card.style.left = "";
+          card.style.top = "";
+        });
       }
     }
 
@@ -151,72 +234,45 @@
     controls.addEventListener("click", function (event) {
       var button = event.target.closest("[data-step]");
       if (!button) return;
-      turn(Number(button.dataset.step));
+      flyTo(current + Number(button.dataset.step));
     });
 
-    // A click on a card that is not in front brings it to the front instead of
-    // following its link, the way a level-select screen works.
+    // A click on a planet the ship is not at flies there instead of following
+    // a link.
     fleet.addEventListener(
       "click",
       function (event) {
         if (!is3d()) return;
         var card = event.target.closest(".planet-card");
-        if (!card || card.classList.contains("is-active")) return;
+        if (!card || card.classList.contains("is-arrived")) return;
         event.preventDefault();
-        select(cards.indexOf(card));
+        flyTo(cards.indexOf(card));
       },
       true
     );
 
-    // Tabbing to a link on another card turns that card to the front, so the
-    // keyboard never lands on something facing away.
-    fleet.addEventListener("focusin", function (event) {
-      if (!is3d()) return;
-      var card = event.target.closest(".planet-card");
-      if (card && !card.classList.contains("is-active")) {
-        select(cards.indexOf(card));
-      }
-    });
-
-    // Arrow keys turn the table from anywhere on the page, except while the
+    // Arrow keys fly the ship from anywhere on the page, except while the
     // focus is on a control that uses them itself.
     document.addEventListener("keydown", function (event) {
       if (!is3d() || event.altKey || event.ctrlKey || event.metaKey) return;
       if (event.target.closest("input, textarea, select, [contenteditable], [role=tab]")) return;
-      if (!n) return;
+      if (!cards.length) return;
       var key = event.key;
       if (key === "ArrowLeft" || key === "ArrowRight") {
         event.preventDefault();
-        turn(key === "ArrowRight" ? 1 : -1);
-        // Keep focus on the card that is now in front, if focus was on a card.
-        if (fleet.contains(document.activeElement)) {
-          var link = cards[active].querySelector("a");
-          if (link) link.focus({ preventScroll: true });
-        }
-      } else if (key === "Enter" && !event.target.closest("a, button, [role]")) {
-        var primary = cards[active].querySelector("a.link");
+        flyTo(current + (key === "ArrowRight" ? 1 : -1));
+      } else if (key === "Enter" && !flight && !event.target.closest("a, button, [role]")) {
+        var primary = cards[current].querySelector("a.link");
         if (primary) primary.click();
       }
     });
 
-    // A slight tilt toward the pointer, for depth. Skipped entirely when the
-    // visitor has asked for reduced motion.
-    function resetTilt() {
-      fleet.style.setProperty("--tilt-x", "0deg");
-      fleet.style.setProperty("--tilt-y", "0deg");
-    }
-
-    main.addEventListener("pointermove", function (event) {
-      if (!is3d() || reduceMotion.matches || event.pointerType !== "mouse") return;
-      var box = main.getBoundingClientRect();
-      var x = (event.clientX - box.left) / box.width - 0.5;
-      var y = (event.clientY - box.top) / box.height - 0.5;
-      fleet.style.setProperty("--tilt-x", (-y * 6).toFixed(2) + "deg");
-      fleet.style.setProperty("--tilt-y", (x * 8).toFixed(2) + "deg");
+    window.addEventListener("resize", function () {
+      if (!is3d() || !cards.length) return;
+      flight = null;
+      layout();
+      arrive();
     });
-    main.addEventListener("pointerleave", resetTilt);
-
-    window.addEventListener("resize", layout);
 
     switchWrap.hidden = false;
     setView(savedView() === "3d" ? "3d" : "flat");
