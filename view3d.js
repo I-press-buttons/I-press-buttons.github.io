@@ -125,6 +125,7 @@
     var systems = null; // { prev, next } tabs either side, or null if alone
     var farSpots = {}; // the distant planets' centres, as prev and next
     var arriving = 0; // set while switching systems: +1 going right, -1 left
+    var shownTab = null; // the tab whose system is on the map
 
     function is3d() {
       return root.dataset.view === "3d";
@@ -285,10 +286,14 @@
 
     // The nearest tabs either side of the selected one, wrapping round, that
     // have any projects. With no other such tab there is nowhere to cross to.
-    function neighbours() {
-      var selected = tabs.filter(function (tab) {
+    function selectedTab() {
+      return tabs.filter(function (tab) {
         return tab.getAttribute("aria-selected") === "true";
       })[0];
+    }
+
+    function neighbours() {
+      var selected = selectedTab();
       var filled = tabs.filter(function (tab) {
         return tab === selected || allCards.some(function (card) {
           return card.dataset.category === tab.dataset.category;
@@ -335,10 +340,18 @@
     // Rebuild from whichever cards are visible now, with the ship parked at
     // the first planet. Arriving from another system, the ship instead flies
     // in from the distant planet that now stands for the one it left, to the
-    // nearest planet on that side.
+    // nearest planet on that side. That goes for a click on a tab as well:
+    // it counts as heading for that system the short way round.
     function refresh() {
       var dir = arriving;
       arriving = 0;
+      var tab = selectedTab();
+      if (!dir && is3d() && systems && shownTab && tab && tab !== shownTab) {
+        if (tab === systems.next) dir = 1;
+        else if (tab === systems.prev) dir = -1;
+        else dir = tabs.indexOf(tab) > tabs.indexOf(shownTab) ? 1 : -1;
+      }
+      shownTab = tab;
       cards = allCards.filter(function (card) {
         return !card.hidden;
       });
