@@ -5,6 +5,11 @@
    view follows it. The flat list is the default and the switch at the top of
    the page turns this on or off; the choice is remembered.
 
+   Each category tab is a solar system. Past either end of one, a distant,
+   out-of-focus planet stands for the next system over (the tabs wrap round),
+   and flying on from the end planet, or clicking that distant one, switches
+   the tab and brings the ship in from the system it left.
+
    The cards in .fleet are the only copy of each project, so a new card shows
    up in both views with nothing else to change. Only the cards the category
    tabs leave visible become planets. */
@@ -69,6 +74,7 @@
     var hudCount = hud.querySelector(".hud-count");
     var controls = document.querySelector(".hud-controls");
     var floor = document.querySelector(".floor");
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".tabs [role=tab]"));
     var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     var ship = document.createElement("div");
@@ -77,11 +83,49 @@
     ship.innerHTML = SHIP_SVG;
     fleet.appendChild(ship);
 
+    // The two distant planets, one past each end of the map. Each shows the
+    // nearest planet of the system it leads to.
+    var far = { prev: farMarker(-1), next: farMarker(1) };
+
+    function farMarker(dir) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "far-system " + (dir < 0 ? "far-prev" : "far-next");
+      button.dataset.dir = String(dir);
+      button.hidden = true;
+      button.innerHTML = '<span class="far-planet"></span><span class="far-name"></span>';
+      fleet.appendChild(button);
+      return button;
+    }
+
+    // A copy of a card's planet. Its gradient and clip ids get a suffix, as
+    // ids must stay unique and the original may be hidden with its tab.
+    function farPlanet(card, suffix) {
+      var svg = card.querySelector(".planet").cloneNode(true);
+      svg.removeAttribute("class");
+      svg.setAttribute("aria-hidden", "true");
+      Array.prototype.forEach.call(svg.querySelectorAll("*"), function (el) {
+        if (el.id) el.id += suffix;
+        ["fill", "stroke", "clip-path"].forEach(function (attr) {
+          var value = el.getAttribute(attr);
+          if (value && value.indexOf("url(#") === 0) {
+            el.setAttribute(attr, value.replace(/\)$/, suffix + ")"));
+          }
+        });
+      });
+      return svg;
+    }
+
     var cards = []; // the visible cards, in order
     var spots = []; // for each: the planet's centre and the ship's parking spot
     var current = 0; // the planet the ship is at, or flying to
     var shipPos = { x: 0, y: 0 };
     var flight = null; // { from, to, control, start, duration } while flying
+    var looping = false; // whether a frame is already queued
+    var systems = null; // { prev, next } tabs either side, or null if alone
+    var farSpots = {}; // the distant planets' centres, as prev and next
+    var arriving = 0; // set while switching systems: +1 going right, -1 left
+    var shownTab = null; // the tab whose system is on the map
 
     function is3d() {
       return root.dataset.view === "3d";
@@ -109,6 +153,21 @@
         return { x: x, y: y, park: { x: x - radius - 26, y: y + 4 } };
       });
       fleet.style.height = bottom + 30 + "px";
+
+      // The distant planets sit a little higher, as if further back, and close
+      // enough to the end planets to stay on screen on a phone.
+      var reach = Math.min(gap * 0.85, fleet.clientWidth / 2 - 20);
+      [far.prev, far.next].forEach(function (button) {
+        if (button.hidden) return;
+        var dir = Number(button.dataset.dir);
+        var x = dir < 0 ? -reach : (cards.length - 1) * gap + reach;
+        var y = top - 40;
+        var planet = button.querySelector(".far-planet");
+        var centre = planet.offsetTop + planet.offsetHeight / 2;
+        button.style.left = x - button.offsetWidth / 2 + "px";
+        button.style.top = y - centre + "px";
+        farSpots[dir < 0 ? "prev" : "next"] = { x: x, y: y };
+      });
     }
 
     function placeShip(pos, angle) {
@@ -140,7 +199,10 @@
     }
 
     function frame(now) {
-      if (!flight) return;
+      if (!flight) {
+        looping = false;
+        return;
+      }
       var t = Math.min(1, (now - flight.start) / flight.duration);
       // Ease in and out, along a curve that arcs up between the planets.
       var e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -163,16 +225,30 @@
       var s = Math.min(1, Math.max(0, (t - (1 - SETTLE)) / SETTLE));
       angle *= 1 - s * s * (3 - 2 * s);
       placeShip({ x: x, y: y }, angle);
-      if (t < 1) requestAnimationFrame(frame);
-      else arrive();
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        looping = false;
+        arrive();
+      }
     }
 
     function flyTo(index) {
       if (!cards.length) return;
+      // Off either end of the map is the next system over.
+      if (systems && (index < 0 || index >= cards.length)) {
+        crossTo(index < 0 ? -1 : 1);
+        return;
+      }
       index = ((index % cards.length) + cards.length) % cards.length;
       if (index === current && !flight) return;
       var hops = Math.abs(index - current) || 1;
       current = index;
+      launch(shipPos, hops);
+    }
+
+    // Send the ship from a point to the planet at `current`.
+    function launch(from, hops) {
       cards.forEach(function (card) {
         card.classList.remove("is-arrived");
       });
@@ -183,10 +259,8 @@
         arrive();
         return;
       }
-      var from = shipPos;
       var to = spots[current].park;
       var lift = 110 + 30 * Math.min(hops, 4);
-      var running = flight !== null;
       flight = {
         from: from,
         to: to,
@@ -197,22 +271,104 @@
       ship.classList.add("is-flying");
       // A press mid-flight just re-aims the ship; the loop already running
       // picks up the new course.
-      if (!running) requestAnimationFrame(frame);
+      if (!looping) {
+        looping = true;
+        requestAnimationFrame(frame);
+      }
+    }
+
+    // Switch to the system either side by selecting its tab. tabs.js then
+    // fires "fleetchange", and refresh() below brings the ship in.
+    function crossTo(dir) {
+      arriving = dir;
+      (dir < 0 ? systems.prev : systems.next).click();
+    }
+
+    // The nearest tabs either side of the selected one, wrapping round, that
+    // have any projects. With no other such tab there is nowhere to cross to.
+    function selectedTab() {
+      return tabs.filter(function (tab) {
+        return tab.getAttribute("aria-selected") === "true";
+      })[0];
+    }
+
+    function neighbours() {
+      var selected = selectedTab();
+      var filled = tabs.filter(function (tab) {
+        return tab === selected || allCards.some(function (card) {
+          return card.dataset.category === tab.dataset.category;
+        });
+      });
+      var i = filled.indexOf(selected);
+      if (i < 0 || filled.length < 2) return null;
+      return {
+        prev: filled[(i - 1 + filled.length) % filled.length],
+        next: filled[(i + 1) % filled.length],
+      };
+    }
+
+    function cardsOf(tab) {
+      return allCards.filter(function (card) {
+        return card.dataset.category === tab.dataset.category;
+      });
+    }
+
+    function label(tab) {
+      return tab.textContent.trim();
+    }
+
+    // Dress each distant planet as the nearest planet of the system it leads
+    // to: the last one of the system to the left, the first to the right.
+    function dressFar() {
+      systems = cards.length ? neighbours() : null;
+      [["prev", -1], ["next", 1]].forEach(function (pair) {
+        var button = far[pair[0]];
+        button.hidden = !systems;
+        if (!systems) return;
+        var tab = systems[pair[0]];
+        var list = cardsOf(tab);
+        var card = pair[1] < 0 ? list[list.length - 1] : list[0];
+        var slot = button.querySelector(".far-planet");
+        slot.textContent = "";
+        slot.appendChild(farPlanet(card, "-far-" + pair[0]));
+        button.querySelector(".far-name").textContent =
+          pair[1] < 0 ? "← " + label(tab) : label(tab) + " →";
+        button.setAttribute("aria-label", "Fly to the " + label(tab) + " system");
+      });
     }
 
     // Rebuild from whichever cards are visible now, with the ship parked at
-    // the first planet.
+    // the first planet. Arriving from another system, the ship instead flies
+    // in from the distant planet that now stands for the one it left, to the
+    // nearest planet on that side. That goes for a click on a tab as well:
+    // it counts as heading for that system the short way round.
     function refresh() {
+      var dir = arriving;
+      arriving = 0;
+      var tab = selectedTab();
+      if (!dir && is3d() && systems && shownTab && tab && tab !== shownTab) {
+        if (tab === systems.next) dir = 1;
+        else if (tab === systems.prev) dir = -1;
+        else dir = tabs.indexOf(tab) > tabs.indexOf(shownTab) ? 1 : -1;
+      }
+      shownTab = tab;
       cards = allCards.filter(function (card) {
         return !card.hidden;
       });
-      current = 0;
+      current = dir < 0 ? Math.max(0, cards.length - 1) : 0;
       flight = null;
       allCards.forEach(function (card) {
         card.classList.remove("is-arrived");
       });
-      if (is3d() && cards.length) {
-        layout();
+      dressFar();
+      if (!is3d() || !cards.length) return;
+      layout();
+      var entry = dir && farSpots[dir > 0 ? "prev" : "next"];
+      if (entry && systems && !reduceMotion.matches) {
+        var start = { x: entry.x + dir * 40, y: entry.y + 4 };
+        placeShip(start, 0);
+        launch(start, 1);
+      } else {
         arrive();
       }
     }
@@ -232,6 +388,10 @@
         allCards.forEach(function (card) {
           card.style.left = "";
           card.style.top = "";
+        });
+        [far.prev, far.next].forEach(function (button) {
+          button.style.left = "";
+          button.style.top = "";
         });
       }
     }
@@ -256,11 +416,17 @@
     });
 
     // A click on a planet the ship is not at flies there instead of following
-    // a link.
+    // a link, and a click on a distant planet flies to its system.
     fleet.addEventListener(
       "click",
       function (event) {
         if (!is3d()) return;
+        var marker = event.target.closest(".far-system");
+        if (marker) {
+          if (event.detail > 0) marker.blur();
+          if (systems) crossTo(Number(marker.dataset.dir));
+          return;
+        }
         var card = event.target.closest(".planet-card");
         if (!card || card.classList.contains("is-arrived")) return;
         event.preventDefault();

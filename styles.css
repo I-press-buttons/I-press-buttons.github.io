@@ -625,6 +625,57 @@ footer p {
   color: var(--ink);
 }
 
+/* The distant planets past each end of the map: the next solar system over,
+   small and out of focus. view3d.js places them and fills each one in with a
+   copy of that system's nearest planet. */
+.far-system {
+  display: none;
+}
+
+[data-view="3d"] .far-system:not([hidden]) {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-faint);
+  font: inherit;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.far-planet svg {
+  display: block;
+  width: 64px;
+  height: 64px;
+  filter: blur(2px) saturate(0.7);
+  transition: filter 0.3s ease;
+}
+
+.far-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+[data-view="3d"] .far-system:hover,
+[data-view="3d"] .far-system:focus-visible {
+  opacity: 0.85;
+  color: var(--ink-soft);
+}
+
+.far-system:hover .far-planet svg,
+.far-system:focus-visible .far-planet svg {
+  filter: blur(0.5px);
+}
+
 /* The ship. view3d.js moves it with a transform from the map's top-left;
    it is drawn so that point is the middle of the hull. */
 .ship {
@@ -766,6 +817,27 @@ footer p {
     padding: 0.6rem 0.45rem;
     font-size: 0.72rem;
     letter-spacing: 0.04em;
+  }
+}
+
+/* Next to a phone-width card, a distant planet only has the strip between
+   the card and the edge of the screen, so it shrinks and its name wraps. */
+@media (max-width: 480px) {
+  [data-view="3d"] .far-system:not([hidden]) {
+    max-width: 68px;
+    padding: 0.2rem;
+  }
+
+  .far-planet svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .far-name {
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    white-space: normal;
+    text-align: center;
   }
 }
 
