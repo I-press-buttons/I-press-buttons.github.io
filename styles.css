@@ -676,6 +676,32 @@ footer p {
   filter: blur(0.5px);
 }
 
+/* Switching systems: the planets left behind fade out where they were while
+   the ship flies on, and the system ahead fades in. */
+[data-view="3d"] .planet-card.is-ghost {
+  pointer-events: none;
+  animation: system-out 1.4s ease-in forwards;
+}
+
+[data-view="3d"] .fleet.is-entering .planet-card:not(.is-ghost),
+[data-view="3d"] .fleet.is-entering .far-system {
+  animation: system-in 1.6s ease-out 0.4s backwards;
+}
+
+@keyframes system-out {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+@keyframes system-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
 /* The ship. view3d.js moves it with a transform from the map's top-left;
    it is drawn so that point is the middle of the hull. */
 .ship {
