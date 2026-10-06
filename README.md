@@ -27,7 +27,7 @@ Without JavaScript the tabs never appear and every project shows.
 | --- | --- |
 | `index.html` | The whole page. Every planet, the rocket and the asteroids are inline SVG. |
 | `styles.css` | The starfield, the layout, the animations and the 3D view. |
-| `tabs.js` | The Networking / Games tabs. They read each card's `data-category`. |
+| `tabs.js` | The Networking / Games / Home Life tabs. They read each card's `data-category`. |
 | `view3d.js` | The 3D view switch, the star map and the ship. It reads the cards from the page. |
 | `favicon.svg` | The tab icon. |
 | `.nojekyll` | Stops Pages running the files through Jekyll. |
@@ -50,11 +50,12 @@ under (`networking`, `games` or `home-life`), and change four things:
    no public repo, use `<span class="link muted">Source is private</span>`
    instead of a dead link.
 
-Then give it its own planet: inside that card's `<svg>`, change the two
+Then give it its own planet: inside that card's `<svg>`, change the three
 `<stop>` colours in the `radialGradient` and rename both the gradient's `id`
 and the `clipPath` id (ids must be unique across the page, and the `fill`/
-`clip-path` references must match the new names). Everything else — the
-banding, the craters, the bob — follows the new colours automatically.
+`clip-path` references must match the new names). The bob follows on its own;
+the banding and craters (and any ring or moon) have their own `fill` or
+`stroke` colours, so recolour those to match.
 
 The 3D view picks the new card up on its own; there is nothing else to edit.
 

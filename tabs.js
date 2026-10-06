@@ -6,7 +6,9 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "tab";
+  // Every project site under this host shares one localStorage, so the key
+  // carries a prefix to stay clear of theirs.
+  var STORAGE_KEY = "homepage.tab";
 
   function savedTab() {
     try {

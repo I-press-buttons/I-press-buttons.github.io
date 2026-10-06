@@ -12,8 +12,11 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "view";
+  // Every project site under this host shares one localStorage, so the key
+  // carries a prefix to stay clear of theirs.
+  var STORAGE_KEY = "homepage.view";
   var FLIGHT_MS = 2400; // one hop; longer trips take a little longer
+  var SETTLE = 0.25; // the last share of a flight spent turning upright
   var root = document.documentElement;
 
   function savedView() {
@@ -151,6 +154,14 @@
       var dy = 2 * u * (c.y - a.y) + 2 * e * (b.y - c.y);
       // The rocket is drawn nose up, so turn it to face the way it is going.
       var angle = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
+      // Keep the heading within a half turn either side of upright, so the
+      // settling below always takes the short way round.
+      if (angle > 180) angle -= 360;
+      // By the end of a hop the nose points down and forward, and arrive()
+      // parks the ship upright. Easing it there over the last stretch stops
+      // that from being a one-frame snap.
+      var s = Math.min(1, Math.max(0, (t - (1 - SETTLE)) / SETTLE));
+      angle *= 1 - s * s * (3 - 2 * s);
       placeShip({ x: x, y: y }, angle);
       if (t < 1) requestAnimationFrame(frame);
       else arrive();
@@ -225,7 +236,10 @@
       }
     }
 
-    toggle.addEventListener("click", function () {
+    toggle.addEventListener("click", function (event) {
+      // Same as the arrows below: after a mouse click the switch would keep
+      // the focus, and the first Enter would turn the view straight back off.
+      if (event.detail > 0) toggle.blur();
       var view = is3d() ? "flat" : "3d";
       saveView(view);
       setView(view);
@@ -234,6 +248,10 @@
     controls.addEventListener("click", function (event) {
       var button = event.target.closest("[data-step]");
       if (!button) return;
+      // A mouse or tap leaves the focus on the button, so the next Enter would
+      // press it again instead of opening the project. A keyboard click has a
+      // detail of 0 and keeps its focus.
+      if (event.detail > 0) button.blur();
       flyTo(current + Number(button.dataset.step));
     });
 
@@ -262,12 +280,23 @@
         event.preventDefault();
         flyTo(current + (key === "ArrowRight" ? 1 : -1));
       } else if (key === "Enter" && !flight && !event.target.closest("a, button, [role]")) {
+        // With no public link there is nothing to open, so say so in the live
+        // region rather than leaving Enter a silent no-op.
         var primary = cards[current].querySelector("a.link");
         if (primary) primary.click();
+        else hudCount.textContent = name(cards[current]) + " has no public link";
       }
     });
 
+    // The layout depends only on the width the page has to lay out in. On a
+    // phone the address bar sliding in and out fires resize with just the
+    // height changed, and acting on that would cut a flight short, so those
+    // are ignored. The document's width leaves out any scrollbar, so one that
+    // comes or goes with the height still counts as a change.
+    var lastWidth = root.clientWidth;
     window.addEventListener("resize", function () {
+      if (root.clientWidth === lastWidth) return;
+      lastWidth = root.clientWidth;
       if (!is3d() || !cards.length) return;
       flight = null;
       layout();
