@@ -168,7 +168,10 @@ footer {
 }
 
 .plume {
-  transform-origin: 50% 0%;
+  /* Inside an SVG these percentages are of the 80x200 viewBox, not of the
+     flame: 64% is y=128, where the flame meets the nozzle, so it burns
+     downward from there. */
+  transform-origin: 50% 64%;
   animation: burn 0.45s ease-in-out infinite alternate;
 }
 
@@ -745,6 +748,24 @@ footer p {
 
   .links {
     justify-content: center;
+  }
+}
+
+/* On the narrowest phones the three tabs cannot fit at their usual size, so
+   the pill spans the column, the tabs share it, and the type and padding
+   tighten until even a wide fallback font fits on one line. */
+@media (max-width: 400px) {
+  .tabs {
+    display: flex;
+    gap: 0.2rem;
+    padding: 0.25rem;
+  }
+
+  .tab {
+    flex: 1 1 auto;
+    padding: 0.6rem 0.45rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
   }
 }
 
