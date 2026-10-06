@@ -8,7 +8,9 @@
    Each category tab is a solar system. Past either end of one, a distant,
    out-of-focus planet stands for the next system over (the tabs wrap round),
    and flying on from the end planet, or clicking that distant one, switches
-   the tab and brings the ship in from the system it left.
+   the tab. The map then holds both systems for a moment: the one left behind
+   fades out where it was while the ship flies on across the gap, so the view
+   never jumps, and the new one fades in ahead of it.
 
    The cards in .fleet are the only copy of each project, so a new card shows
    up in both views with nothing else to change. Only the cards the category
@@ -22,6 +24,8 @@
   var STORAGE_KEY = "homepage.view";
   var FLIGHT_MS = 2400; // one hop; longer trips take a little longer
   var SETTLE = 0.25; // the last share of a flight spent turning upright
+  var VOID = 2.2; // the gap between two systems, in planet gaps
+  var FADE_MS = 1400; // how long a system left behind takes to fade out
   var root = document.documentElement;
 
   function savedView() {
@@ -98,13 +102,11 @@
       return button;
     }
 
-    // A copy of a card's planet. Its gradient and clip ids get a suffix, as
-    // ids must stay unique and the original may be hidden with its tab.
-    function farPlanet(card, suffix) {
-      var svg = card.querySelector(".planet").cloneNode(true);
-      svg.removeAttribute("class");
-      svg.setAttribute("aria-hidden", "true");
-      Array.prototype.forEach.call(svg.querySelectorAll("*"), function (el) {
+    // Give every id in a copied planet a suffix, and point its gradient and
+    // clip references at the renamed ones, as ids must stay unique and the
+    // original may be hidden with its tab.
+    function renameIds(node, suffix) {
+      Array.prototype.forEach.call(node.querySelectorAll("svg *"), function (el) {
         if (el.id) el.id += suffix;
         ["fill", "stroke", "clip-path"].forEach(function (attr) {
           var value = el.getAttribute(attr);
@@ -113,13 +115,61 @@
           }
         });
       });
-      return svg;
+      return node;
+    }
+
+    // A copy of a card's planet.
+    function farPlanet(card, suffix) {
+      var svg = card.querySelector(".planet").cloneNode(true);
+      svg.removeAttribute("class");
+      svg.setAttribute("aria-hidden", "true");
+      return renameIds(svg, suffix);
+    }
+
+    // Stand-ins for the planets of a system the ship is leaving, so they can
+    // fade out where they were after their tab has hidden the real ones.
+    var ghosts = [];
+    var ghostTimer = 0;
+
+    function clearGhosts() {
+      clearTimeout(ghostTimer);
+      ghosts.forEach(function (ghost) {
+        ghost.remove();
+      });
+      ghosts = [];
+    }
+
+    function leaveBehind(left, shift, arrived) {
+      clearGhosts();
+      left.forEach(function (card, i) {
+        var ghost = renameIds(card.cloneNode(true), "-ghost-" + i);
+        ghost.hidden = false;
+        ghost.classList.add("is-ghost");
+        ghost.classList.toggle("is-arrived", card === arrived);
+        ghost.setAttribute("aria-hidden", "true");
+        ghost.setAttribute("inert", "");
+        ghost.style.left = parseFloat(card.style.left) + shift + "px";
+        fleet.insertBefore(ghost, ship);
+        ghosts.push(ghost);
+      });
+      ghostTimer = setTimeout(clearGhosts, FADE_MS);
+    }
+
+    // The system the ship arrives at fades in. Restarting the animation needs
+    // the class off for one style pass.
+    function fadeIn() {
+      fleet.classList.remove("is-entering");
+      void fleet.offsetWidth;
+      fleet.classList.add("is-entering");
     }
 
     var cards = []; // the visible cards, in order
     var spots = []; // for each: the planet's centre and the ship's parking spot
     var current = 0; // the planet the ship is at, or flying to
     var shipPos = { x: 0, y: 0 };
+    var shipAngle = 0;
+    var lead = 0; // how far left of centre the camera keeps the ship
+    var gap = 0; // the distance between neighbouring planets
     var flight = null; // { from, to, control, start, duration } while flying
     var looping = false; // whether a frame is already queued
     var systems = null; // { prev, next } tabs either side, or null if alone
@@ -136,7 +186,7 @@
     // names above the planets wrap to different heights.
     function layout() {
       if (!is3d() || !cards.length) return;
-      var gap = Math.min(340, Math.max(250, window.innerWidth * 0.7));
+      gap = Math.min(340, Math.max(250, window.innerWidth * 0.7));
       var offsets = cards.map(function (card) {
         var slot = card.querySelector(".planet-slot");
         return slot.offsetTop + slot.offsetHeight / 2;
@@ -172,13 +222,17 @@
 
     function placeShip(pos, angle) {
       shipPos = pos;
+      shipAngle = angle;
       ship.style.transform =
         "translate(" + pos.x + "px," + pos.y + "px) rotate(" + angle + "deg)";
       // The view follows the ship: the whole map shifts so the ship sits just
       // left of centre, leaving its planet in the middle, and the floor grid
-      // drifts with it.
+      // drifts with it. Planets differ in size, so in flight the lead eases
+      // from the one it had to the one the next planet needs.
       var spot = spots[current];
-      var camera = fleet.clientWidth / 2 - (pos.x + (spot.x - spot.park.x));
+      lead = spot.x - spot.park.x;
+      if (flight) lead = flight.lead + (lead - flight.lead) * flight.e;
+      var camera = fleet.clientWidth / 2 - (pos.x + lead);
       fleet.style.setProperty("--camera", camera + "px");
       floor.style.backgroundPosition = camera * 0.6 + "px 0";
     }
@@ -206,6 +260,7 @@
       var t = Math.min(1, (now - flight.start) / flight.duration);
       // Ease in and out, along a curve that arcs up between the planets.
       var e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      flight.e = e;
       var a = flight.from;
       var c = flight.control;
       var b = flight.to;
@@ -262,6 +317,8 @@
       var to = spots[current].park;
       var lift = 110 + 30 * Math.min(hops, 4);
       flight = {
+        lead: lead,
+        e: 0,
         from: from,
         to: to,
         control: { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - lift },
@@ -339,9 +396,11 @@
 
     // Rebuild from whichever cards are visible now, with the ship parked at
     // the first planet. Arriving from another system, the ship instead flies
-    // in from the distant planet that now stands for the one it left, to the
-    // nearest planet on that side. That goes for a click on a tab as well:
-    // it counts as heading for that system the short way round.
+    // on from wherever it was to the nearest planet on that side, across a
+    // gap of empty space. The new system is laid out beyond that gap, so the
+    // ship and the camera carry straight on, and the system left behind
+    // fades out where it was. That goes for a click on a tab as well: it
+    // counts as heading for that system the short way round.
     function refresh() {
       var dir = arriving;
       arriving = 0;
@@ -352,6 +411,15 @@
         else dir = tabs.indexOf(tab) > tabs.indexOf(shownTab) ? 1 : -1;
       }
       shownTab = tab;
+      var smooth = dir && is3d() && cards.length && !reduceMotion.matches;
+      var left = smooth ? cards : [];
+      var from = shipPos;
+      var oldLast = (left.length - 1) * gap;
+      var arrived = left.filter(function (card) {
+        return card.classList.contains("is-arrived");
+      })[0];
+      clearGhosts();
+      fleet.classList.remove("is-entering");
       cards = allCards.filter(function (card) {
         return !card.hidden;
       });
@@ -363,14 +431,20 @@
       dressFar();
       if (!is3d() || !cards.length) return;
       layout();
-      var entry = dir && farSpots[dir > 0 ? "prev" : "next"];
-      if (entry && systems && !reduceMotion.matches) {
-        var start = { x: entry.x + dir * 40, y: entry.y + 4 };
-        placeShip(start, 0);
-        launch(start, 1);
-      } else {
+      if (!smooth) {
         arrive();
+        return;
       }
+      // Where the old map's x = 0 falls on the new one. Going right, the old
+      // system ends a void's width left of the new first planet; going left,
+      // it starts a void's width right of the new last planet.
+      var shift =
+        dir > 0 ? -VOID * gap - oldLast : (cards.length - 1 + VOID) * gap;
+      leaveBehind(left, shift, arrived);
+      fadeIn();
+      var start = { x: from.x + shift, y: from.y };
+      launch(start, 3);
+      placeShip(start, shipAngle);
     }
 
     fleet.addEventListener("fleetchange", refresh);
@@ -384,6 +458,7 @@
         refresh();
       } else {
         flight = null;
+        clearGhosts();
         fleet.style.height = "";
         allCards.forEach(function (card) {
           card.style.left = "";

@@ -16,7 +16,8 @@ or a click on a planet sends the ship on a short flight, and Enter opens the
 project it is parked at. Each category tab is its own solar system: flying on
 past the first or last planet, or clicking the faded, distant planet beyond
 it, switches to the neighbouring tab (they wrap round, so Networking's left
-neighbour is Home Life) and the ship flies in from the system it left.
+neighbour is Home Life). The ship flies on across the gap without the view
+jumping: the system it left fades out behind it as the new one fades in.
 Clicking a tab in the 3D view flies the ship over the same way; in the flat
 list a tab just switches. The
 choice of view is remembered per browser. With
