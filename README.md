@@ -13,7 +13,11 @@ same cards into a star map: each project is a planet with its name above it,
 and a small ship flies between them. A project's description only appears once
 the ship has arrived. One press of an arrow key, a tap on the on-screen arrows
 or a click on a planet sends the ship on a short flight, and Enter opens the
-project it is parked at. The choice of view is remembered per browser. With
+project it is parked at. Each category tab is its own solar system: flying on
+past the first or last planet, or clicking the faded, distant planet beyond
+it, switches to the neighbouring tab (they wrap round, so Networking's left
+neighbour is Home Life) and the ship flies in from the system it left. The
+choice of view is remembered per browser. With
 reduced motion set in the OS, the ship arrives straight away instead of flying.
 Without JavaScript the switch never appears and the page is the flat list.
 
@@ -28,7 +32,7 @@ Without JavaScript the tabs never appear and every project shows.
 | `index.html` | The whole page. Every planet, the rocket and the asteroids are inline SVG. |
 | `styles.css` | The starfield, the layout, the animations and the 3D view. |
 | `tabs.js` | The Networking / Games / Home Life tabs. They read each card's `data-category`. |
-| `view3d.js` | The 3D view switch, the star map and the ship. It reads the cards from the page. |
+| `view3d.js` | The 3D view switch, the star map, the ship and the hops between tabs' solar systems. It reads the cards and tabs from the page. |
 | `favicon.svg` | The tab icon. |
 | `.nojekyll` | Stops Pages running the files through Jekyll. |
 
